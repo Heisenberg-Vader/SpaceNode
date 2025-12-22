@@ -66,10 +66,10 @@ export function FPSCamera() {
 
     direction.current.set(0, 0, 0)
 
-    if (keys.current['KeyW']) direction.current.z -= 1
-    if (keys.current['KeyS']) direction.current.z += 1
-    if (keys.current['KeyA']) direction.current.x -= 1
-    if (keys.current['KeyD']) direction.current.x += 1
+    if (keys.current['KeyW']) direction.current.z -= 0.1
+    if (keys.current['KeyS']) direction.current.z += 0.1
+    if (keys.current['KeyA']) direction.current.x -= 0.1
+    if (keys.current['KeyD']) direction.current.x += 0.1
     if (keys.current['Space']) direction.current.y += 1
     if (keys.current['ShiftLeft']) direction.current.y -= 1
 
