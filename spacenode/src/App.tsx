@@ -5,6 +5,7 @@ import type { InstancedNodesHandle } from './components/InstancedNodes'
 import { useRef, useState } from 'react'
 import { useInstancedRaycast } from './shaders/useInstancedRaycast'
 import { RenderControls } from './components/RenderControls'
+import { Crosshair } from './components/Crosshair'
 
 type SceneProps = {
   renderDistance: number
@@ -32,6 +33,7 @@ export default function App() {
 
   return (
     <>
+      <Crosshair />
       <RenderControls
         renderDistance={renderDistance}
         setRenderDistance={setRenderDistance}
