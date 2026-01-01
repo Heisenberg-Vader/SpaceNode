@@ -1,24 +1,23 @@
 import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useThree } from '@react-three/fiber'
+import type { VideoNode } from '../data/useNodes'
 import * as THREE from 'three'
 
 export type InstancedNodesHandle = {
-  mesh: THREE.InstancedMesh
-  positions: THREE.Vector3[]
+    mesh: THREE.InstancedMesh
+    positions: THREE.Vector3[]
 }
 
 type InstancedNodesProps = {
-  count: number
-  spread?: number
-  renderDistance: number
+    nodes: VideoNode[]
+    renderDistance: number
 }
 
-export const InstancedNodes = forwardRef<InstancedNodesHandle, InstancedNodesProps>(({ count, spread = 100, renderDistance }, ref) => {
+export const InstancedNodes = forwardRef<InstancedNodesHandle, InstancedNodesProps>(({ nodes, renderDistance }, ref) => {
     const { camera } = useThree()
 
     const meshRef = useRef<THREE.InstancedMesh>(null!)
 
-    // Shared geometry
     const geometry = useMemo(
         () => new THREE.SphereGeometry(0.2, 12, 12),
         []
@@ -28,18 +27,19 @@ export const InstancedNodes = forwardRef<InstancedNodesHandle, InstancedNodesPro
     const dummy = useMemo(() => new THREE.Object3D(), [])
     const camPos = useMemo(() => new THREE.Vector3(), [])
 
-    // Initial placement
+    // -------------------------
+    // INITIAL PLACEMENT (backend-driven)
+    // -------------------------
     useEffect(() => {
         if (!meshRef.current) return
+        if (nodes.length === 0) return
 
-        for (let i = 0; i < count; i++) {
-        const pos = new THREE.Vector3(
-            (Math.random() - 0.5) * spread,
-            (Math.random() - 0.5) * spread,
-            (Math.random() - 0.5) * spread
-        )
+        for (let i = 0; i < nodes.length; i++) {
+        const [x, y, z] = nodes[i].position
 
+        const pos = new THREE.Vector3(x, y, z)
         positions[i] = pos
+
         dummy.position.copy(pos)
         dummy.scale.set(1, 1, 1)
         dummy.updateMatrix()
@@ -47,32 +47,36 @@ export const InstancedNodes = forwardRef<InstancedNodesHandle, InstancedNodesPro
         }
 
         meshRef.current.instanceMatrix.needsUpdate = true
-    }, [count, spread, dummy, positions])
+    }, [nodes])
 
-    // Render-distance culling (runs ONLY when slider changes)
+    // -------------------------
+    // RENDER DISTANCE CULLING
+    // -------------------------
     useEffect(() => {
         if (!meshRef.current) return
+        if (nodes.length === 0) return
 
         camPos.copy(camera.position)
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < nodes.length; i++) {
         const pos = positions[i]
+        if (!pos) continue
+
         const dist = camPos.distanceTo(pos)
 
         dummy.position.copy(pos)
-
-        if (dist > renderDistance) {
-            dummy.scale.set(0, 0, 0)
-        } else {
-            dummy.scale.set(1, 1, 1)
-        }
+        dummy.scale.set(
+            dist > renderDistance ? 0 : 1,
+            dist > renderDistance ? 0 : 1,
+            dist > renderDistance ? 0 : 1
+        )
 
         dummy.updateMatrix()
         meshRef.current.setMatrixAt(i, dummy.matrix)
         }
 
         meshRef.current.instanceMatrix.needsUpdate = true
-    }, [renderDistance, count, camera, positions, dummy, camPos])
+    }, [renderDistance, nodes])
 
     useImperativeHandle(ref, () => ({
         mesh: meshRef.current,
@@ -81,9 +85,9 @@ export const InstancedNodes = forwardRef<InstancedNodesHandle, InstancedNodesPro
 
     return (
         <instancedMesh
-        ref={meshRef}
-        args={[undefined, undefined, count]}
-        frustumCulled={false}
+            ref={meshRef}
+            args={[undefined, undefined, nodes.length]}
+            frustumCulled={false}
         >
         <primitive object={geometry} attach="geometry" />
         <meshBasicMaterial color="cyan" />

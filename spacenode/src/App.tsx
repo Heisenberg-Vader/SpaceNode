@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { useInstancedRaycast } from './shaders/useInstancedRaycast'
 import { RenderControls } from './components/RenderControls'
 import { Crosshair } from './components/Crosshair'
+import { useNodes } from './data/useNodes'
 
 type SceneProps = {
   renderDistance: number
@@ -15,13 +16,16 @@ function Scene({ renderDistance }: SceneProps) {
   const nodesRef = useRef<InstancedNodesHandle>(null)
   useInstancedRaycast(nodesRef)
 
+  const { nodes, loading } = useNodes()
+
+  if (loading) return null
+
   return (
     <>
       <FPSCamera />
       <InstancedNodes
         ref={nodesRef}
-        count={10000}
-        spread={500}
+        nodes={nodes}
         renderDistance={renderDistance}
       />
     </>
